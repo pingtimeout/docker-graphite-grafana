@@ -16,8 +16,12 @@ carbon-cache and grafana.
 
 ### Data volumes
 
-Graphite data is stored at `/var/lib/graphite/storage/whisper` within the
-container. Grafana database is stored at `/usr/share/grafana/data`. If you wish to store your metrics outside the container (highly
+ - Graphite data is stored at `/var/lib/graphite/storage/whisper` within the
+container.
+ - Graphite configuration files are stored in `/var/lib/graphite/conf/`.
+ - Grafana database is stored at `/usr/share/grafana/data`.
+
+If you wish to store your metrics outside the container (highly
 recommended) and save your Grafana dashboard configuration you can use docker's data volumes feature.
 
 **Note**: It may take around a minute in the first time for grafana to load because of some model migrations and initalizations, please be patient :)
@@ -26,7 +30,8 @@ recommended) and save your Grafana dashboard configuration you can use docker's 
 
 Here is an example that stores the data at `/var/lib/gmonitor` on the host and connects grafana and carbon-cache ports to host:
 
-    docker run -v /var/lib/gmonitor/graphite:/var/lib/graphite/storage/whisper \
+    docker run -v /var/lib/gmonitor/graphite/whisper:/var/lib/graphite/storage/whisper \
+               -v /var/lib/gmonitor/graphite/conf:/var/lib/graphite/conf \
                -v /var/lib/gmonitor/grafana/data:/usr/share/grafana/data \
                -p 2003:2003 -p 3000:3000 \
                -d alexmercer/graphite-grafana

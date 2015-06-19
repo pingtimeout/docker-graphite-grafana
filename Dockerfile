@@ -15,21 +15,25 @@ run apt-get install -y adduser libfontconfig
 run dpkg -i grafana_2.0.2_amd64.deb
 run rm grafana_2.0.2_amd64.deb
 
+# Add graphite webapp config
+add	./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
+add	./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
+run	cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
+
 # Add system service config
 add	./nginx.conf /etc/nginx/nginx.conf
 add	./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Add graphite config
-add	./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
-add	./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
+# Add graphite carbon config
 add	./carbon.conf /var/lib/graphite/conf/carbon.conf
 add	./storage-schemas.conf /var/lib/graphite/conf/storage-schemas.conf
+run cp -r /var/lib/graphite/conf/ /graphite_conf/
+add	./startup.sh /startup.sh
 run	mkdir -p /var/lib/graphite/storage/whisper
 run	touch /var/lib/graphite/storage/graphite.db /var/lib/graphite/storage/index
 run	chown -R www-data /var/lib/graphite/storage
 run	chmod 0775 /var/lib/graphite/storage /var/lib/graphite/storage/whisper
 run	chmod 0664 /var/lib/graphite/storage/graphite.db
-run	cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
 
 # Add grafana config
 add	./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
@@ -47,6 +51,8 @@ expose	:3000
 
 VOLUME ["/usr/share/grafana/data"]
 VOLUME ["/var/lib/graphite/storage/whisper"]
+VOLUME ["/var/lib/graphite/conf/"]
+
 
 cmd	["/usr/bin/supervisord"]
 
