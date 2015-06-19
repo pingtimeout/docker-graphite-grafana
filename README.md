@@ -1,42 +1,40 @@
-## Graphite + Carbon
+## Graphite + Carbon + Grafana
 
-An all-in-one image running graphite and carbon-cache. **Version**: 0.9.12.
+An all-in-one image running graphite, carbon-cache and grafana. **Version**: 0.9.12.
 
-This image contains a sensible default configuration of graphite and
-carbon-cache. Starting this container will, by default, bind the the following
-host ports:
+This image contains a sensible default configuration of graphite,
+carbon-cache and grafana.
 
-- `80`: the graphite web interface
-- `2003`: the carbon-cache line receiver (the standard graphite protocol)
-- `2004`: the carbon-cache pickle receiver
-- `7002`: the carbon-cache query port (used by the web interface)
 
-With this image, you can get up and running with graphite by simply running:
+### Ports
 
-    docker run -d nickstenning/graphite
-
-If you already have services running on the host on one or more of these ports,
-you may wish to allow docker to assign random ports on the host. You can do this
-easily by running:
-
-    docker run -p 80 -p 2003 -p 2004 -p 7002 -d nickstenning/graphite
-
-You can log into the administrative interface of graphite-web (a Django
-application) with the username `admin` and password `admin`. These passwords can
-be changed through the web interface.
-
-**NB**: Please be aware that by default docker will make the exposed ports
-accessible from anywhere if the host firewall is unconfigured.
+- `80`: graphite web interface
+- `2003`: carbon-cache line receiver (the standard graphite protocol)
+- `2004`: carbon-cache pickle receiver
+- `3000`: grafana dashboard
+- `7002`: carbon-cache query port (used by the web interface)
 
 ### Data volumes
 
 Graphite data is stored at `/var/lib/graphite/storage/whisper` within the
-container. If you wish to store your metrics outside the container (highly
-recommended) you can use docker's data volumes feature. For example, to store
-graphite's metric database at `/data/graphite` on the host, you could use:
+container. Grafana database is stored at `/usr/share/grafana/data`. If you wish to store your metrics outside the container (highly
+recommended) and save your Grafana dashboard configuration you can use docker's data volumes feature.
 
-    docker run -v /data/graphite:/var/lib/graphite/storage/whisper \
-               -d nickstenning/graphite
+**Note**: It may take around a minute in the first time for grafana to load because of some model migrations and initalizations, please be patient :)
+
+### Running the image
+
+Here is an example that stores the data at `/var/lib/gmonitor` on the host and connects grafana and carbon-cache ports to host:
+
+    docker run -v /var/lib/gmonitor/graphite:/var/lib/graphite/storage/whisper \
+               -v /var/lib/gmonitor/grafana/data:/usr/share/grafana/data \
+               -p 2003:2003 -p 3000:3000 \
+               -d alexmercer/graphite-grafana
+
+You can log into the administrative interface of Grafana with the username `admin` and password `admin`. These passwords can
+be changed through the web interface.
+
+The first thing to do is adding graphite data source in grafana using it's interface. The graphite url is `http://localhost:80`
 
 ### Technical details
 

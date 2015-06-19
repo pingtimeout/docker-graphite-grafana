@@ -42,6 +42,9 @@ expose	:7002
 # Grafana
 expose	:3000
 
+VOLUME ["/usr/share/grafana/data"]
+VOLUME ["/var/lib/graphite/storage/whisper"]
+
 cmd	["/usr/bin/supervisord"]
 
 # vim:ts=8:noet:
