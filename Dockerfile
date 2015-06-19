@@ -31,6 +31,9 @@ run	chmod 0775 /var/lib/graphite/storage /var/lib/graphite/storage/whisper
 run	chmod 0664 /var/lib/graphite/storage/graphite.db
 run	cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
 
+# Add grafana config
+add	./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
+
 # Nginx
 expose	:80
 # Carbon line receiver port
