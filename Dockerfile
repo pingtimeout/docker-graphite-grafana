@@ -1,59 +1,75 @@
 # DOCKER-VERSION 0.4.0
 
-from	ubuntu:trusty
-run	apt-get -y update
+FROM ubuntu:trusty
 
 # Install required packages
-run	apt-get -y install python-ldap python-cairo python-django python-twisted python-django-tagging python-simplejson python-memcache python-pysqlite2 python-support python-pip gunicorn supervisor nginx-light wget
-run	pip install whisper
-run	pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/lib" carbon
-run	pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/webapp" graphite-web
+RUN apt-get update && apt-get install -y \
+    adduser \
+    gunicorn \
+    libfontconfig \
+    nginx-light \
+    python-cairo \
+    python-django \
+    python-django-tagging \
+    python-ldap \
+    python-memcache \
+    python-pip \
+    python-pysqlite2 \
+    python-simplejson \
+    python-support \
+    python-twisted \
+    supervisor \
+    wget
+
+RUN pip install \
+    pytz \
+    whisper
+RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/lib" carbon
+RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/webapp" graphite-web
 
 # Grafana
-run wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.2_amd64.deb
-run apt-get install -y adduser libfontconfig
-run dpkg -i grafana_2.0.2_amd64.deb
-run rm grafana_2.0.2_amd64.deb
+RUN wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.6.0_amd64.deb ;\
+    dpkg -i grafana_2.6.0_amd64.deb ;\
+    rm grafana_2.6.0_amd64.deb
 
 # Add graphite webapp config
-add	./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
-add	./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
-run	cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
+ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
+ADD ./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
+RUN cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
 
 # Add system service config
-add	./nginx.conf /etc/nginx/nginx.conf
-add	./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+ADD ./nginx.conf /etc/nginx/nginx.conf
+ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Add graphite carbon config
-add	./carbon.conf /var/lib/graphite/conf/carbon.conf
-add	./storage-schemas.conf /var/lib/graphite/conf/storage-schemas.conf
-run cp -r /var/lib/graphite/conf/ /graphite_conf/
-add	./startup.sh /startup.sh
-run	mkdir -p /var/lib/graphite/storage/whisper
-run	touch /var/lib/graphite/storage/graphite.db /var/lib/graphite/storage/index
-run	chown -R www-data /var/lib/graphite/storage
-run	chmod 0775 /var/lib/graphite/storage /var/lib/graphite/storage/whisper
-run	chmod 0664 /var/lib/graphite/storage/graphite.db
+ADD ./carbon.conf /var/lib/graphite/conf/carbon.conf
+ADD ./storage-schemas.conf /var/lib/graphite/conf/storage-schemas.conf
+RUN cp -r /var/lib/graphite/conf/ /graphite_conf/
+ADD ./startup.sh /startup.sh
+RUN mkdir -p /var/lib/graphite/storage/whisper
+RUN touch /var/lib/graphite/storage/graphite.db /var/lib/graphite/storage/index
+RUN chown -R www-data /var/lib/graphite/storage
+RUN chmod 0775 /var/lib/graphite/storage /var/lib/graphite/storage/whisper
+RUN chmod 0664 /var/lib/graphite/storage/graphite.db
 
 # Add grafana config
-add	./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
+ADD ./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
 
 # Nginx
-expose	:80
+EXPOSE :80
 # Carbon line receiver port
-expose	:2003
+EXPOSE :2003
 # Carbon pickle receiver port
-expose	:2004
+EXPOSE :2004
 # Carbon cache query port
-expose	:7002
+EXPOSE :7002
 # Grafana
-expose	:3000
+EXPOSE :3000
 
 VOLUME ["/usr/share/grafana/data"]
 VOLUME ["/var/lib/graphite/storage/whisper"]
 VOLUME ["/var/lib/graphite/conf/"]
 
-
-cmd	["/usr/bin/supervisord"]
+CMD ["/usr/bin/supervisord"]
 
 # vim:ts=8:noet:
