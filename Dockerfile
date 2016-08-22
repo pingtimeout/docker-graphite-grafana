@@ -28,9 +28,9 @@ RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="
 RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/webapp" graphite-web
 
 # Grafana
-RUN wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.6.0_amd64.deb ;\
-    dpkg -i grafana_2.6.0_amd64.deb ;\
-    rm grafana_2.6.0_amd64.deb
+RUN wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.1.1-1470047149_amd64.deb ;\
+    dpkg -i grafana_3.1.1-1470047149_amd64.deb ;\
+    rm grafana_3.1.1-1470047149_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
