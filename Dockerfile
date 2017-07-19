@@ -1,41 +1,37 @@
 # DOCKER-VERSION 0.4.0
 
-FROM ubuntu:trusty
+FROM ubuntu:xenial
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    libffi-dev \
+    python-dev \
     adduser \
     gunicorn \
     libfontconfig \
     nginx-light \
     python-cairo \
-    python-django \
-    python-django-tagging \
     python-ldap \
-    python-memcache \
     python-pip \
     python-pysqlite2 \
     python-simplejson \
-    python-support \
     python-twisted \
     supervisor \
     wget
 
-RUN pip install \
+RUN pip2 install --upgrade pip
+RUN pip2 install setuptools --upgrade
+RUN pip2 install --upgrade \
     pytz \
     whisper
-RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/lib" carbon
-RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/webapp" graphite-web
-
-# Grafana
-RUN wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.1.1-1470047149_amd64.deb ;\
-    dpkg -i grafana_3.1.1-1470047149_amd64.deb ;\
-    rm grafana_3.1.1-1470047149_amd64.deb
+RUN pip2 install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/lib" carbon
+RUN pip2 install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/webapp" graphite-web
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
 ADD ./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
-RUN cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
+RUN PYTHONPATH=/var/lib/graphite/webapp django-admin migrate --settings=graphite.settings --run-syncdb
 
 # Add system service config
 ADD ./nginx.conf /etc/nginx/nginx.conf
@@ -51,6 +47,11 @@ RUN touch /var/lib/graphite/storage/graphite.db /var/lib/graphite/storage/index
 RUN chown -R www-data /var/lib/graphite/storage
 RUN chmod 0775 /var/lib/graphite/storage /var/lib/graphite/storage/whisper
 RUN chmod 0664 /var/lib/graphite/storage/graphite.db
+
+# Grafana
+RUN wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.1_amd64.deb  ;\
+    dpkg -i grafana_4.4.1_amd64.deb ;\
+    rm grafana_4.4.1_amd64.deb
 
 # Add grafana config
 ADD ./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
