@@ -6,9 +6,11 @@ FROM ubuntu:trusty
 RUN apt-get update && apt-get install -y \
     adduser \
     gunicorn \
+    libffi-dev \
     libfontconfig \
     nginx-light \
     python-cairo \
+    python-dev \
     python-django \
     python-django-tagging \
     python-ldap \
@@ -28,14 +30,15 @@ RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="
 RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/webapp" graphite-web
 
 # Grafana
-RUN wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.1.1-1470047149_amd64.deb ;\
-    dpkg -i grafana_3.1.1-1470047149_amd64.deb ;\
-    rm grafana_3.1.1-1470047149_amd64.deb
+RUN wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.1_amd64.deb ;\
+    dpkg -i grafana_4.4.1_amd64.deb ;\
+    rm grafana_4.4.1_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
 ADD ./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
-RUN cd /var/lib/graphite/webapp/graphite && python manage.py syncdb --noinput
+RUN PYTHONPATH=/var/lib/graphite/webapp django-admin migrate --settings=graphite.settings --run-syncdb
+
 
 # Add system service config
 ADD ./nginx.conf /etc/nginx/nginx.conf
