@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     python-simplejson \
     python-support \
     python-twisted \
+    sqlite3 \
     supervisor \
     unzip \
     wget
@@ -40,15 +41,15 @@ RUN wget --no-check-certificate -O master.zip https://github.com/wolfcw/libfaket
     cd libfaketime-master && make install && cd ..
 
 # Grafana
-RUN wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.1_amd64.deb ;\
-    dpkg -i grafana_4.4.1_amd64.deb ;\
-    rm grafana_4.4.1_amd64.deb
+RUN wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.6.2_amd64.deb ;\
+    dpkg -i grafana_4.6.2_amd64.deb ;\
+    rm grafana_4.6.2_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
 ADD ./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
-RUN PYTHONPATH=/var/lib/graphite/webapp django-admin migrate --settings=graphite.settings --run-syncdb
-
+RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp django-admin migrate  --settings=graphite.settings --no-input --run-syncdb
+RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp django-admin loaddata --settings=graphite.settings /var/lib/graphite/webapp/graphite/initial_data.json
 
 # Add system service config
 ADD ./nginx.conf /etc/nginx/nginx.conf
