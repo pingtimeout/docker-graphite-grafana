@@ -5,17 +5,15 @@ FROM ubuntu:trusty
 # Install required packages
 RUN apt-get update && apt-get install -y \
     adduser \
+    build-essential \
     gunicorn \
     libffi-dev \
     libfontconfig \
     nginx-light \
     python-cairo \
     python-dev \
-    python-django \
-    python-django-tagging \
     python-ldap \
     python-memcache \
-    python-pip \
     python-pysqlite2 \
     python-simplejson \
     python-support \
@@ -25,7 +23,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget
 
+RUN easy_install pip
+RUN pip install --upgrade pip
 RUN pip install \
+    six \
+    urllib3 \
     pytz \
     whisper
 RUN pip install --install-option="--prefix=/var/lib/graphite" --install-option="--install-lib=/var/lib/graphite/lib" carbon
@@ -41,15 +43,15 @@ RUN wget --no-check-certificate -O master.zip https://github.com/wolfcw/libfaket
     cd libfaketime-master && make install && cd ..
 
 # Grafana
-RUN wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_5.1.4_amd64.deb ;\
-    dpkg -i grafana_5.1.4_amd64.deb ;\
-    rm grafana_5.1.4_amd64.deb
+RUN wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_6.1.1_amd64.deb ;\
+    dpkg -i grafana_6.1.1_amd64.deb ;\
+    rm grafana_6.1.1_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
 ADD ./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
-RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp django-admin migrate  --settings=graphite.settings --no-input --run-syncdb
-RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp django-admin loaddata --settings=graphite.settings /var/lib/graphite/webapp/graphite/initial_data.json
+RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp /var/lib/graphite/bin/django-admin migrate  --settings=graphite.settings --no-input --run-syncdb
+RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp /var/lib/graphite/bin/django-admin loaddata --settings=graphite.settings /var/lib/graphite/webapp/graphite/initial_data.json
 
 # Add system service config
 ADD ./nginx.conf /etc/nginx/nginx.conf
