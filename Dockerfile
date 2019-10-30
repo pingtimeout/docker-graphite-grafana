@@ -43,9 +43,9 @@ RUN wget --no-check-certificate -O master.zip https://github.com/wolfcw/libfaket
     cd libfaketime-master && make install && cd ..
 
 # Grafana
-RUN wget https://dl.grafana.com/oss/release/grafana_6.1.6_amd64.deb ;\
-    dpkg -i grafana_6.1.6_amd64.deb ;\
-    rm grafana_6.1.6_amd64.deb
+RUN wget https://dl.grafana.com/oss/release/grafana_6.4.3_amd64.deb ;\
+    dpkg -i grafana_6.4.3_amd64.deb ;\
+    rm grafana_6.4.3_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
