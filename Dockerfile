@@ -1,11 +1,12 @@
 # DOCKER-VERSION 0.4.0
 
-FROM ubuntu:trusty
+FROM ubuntu:bionic
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
     adduser \
     build-essential \
+    carbon-c-relay \
     gunicorn \
     libffi-dev \
     libfontconfig \
@@ -15,16 +16,15 @@ RUN apt-get update && apt-get install -y \
     python-ldap \
     python-memcache \
     python-pysqlite2 \
+    python-pip \
     python-simplejson \
-    python-support \
     python-twisted \
     sqlite3 \
     supervisor \
     unzip \
     wget
 
-RUN easy_install pip
-RUN pip install --upgrade pip
+RUN pip install --upgrade pip==20.1
 RUN pip install \
     six \
     urllib3 \
@@ -57,6 +57,9 @@ RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp /var/lib/
 ADD ./nginx.conf /etc/nginx/nginx.conf
 ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Add carbon-c-relay config
+ADD ./carbon-c-relay.conf /var/lib/graphite/conf/carbon-c-relay.conf
+
 # Add graphite carbon config
 ADD ./carbon.conf /var/lib/graphite/conf/carbon.conf
 ADD ./storage-schemas.conf /var/lib/graphite/conf/storage-schemas.conf
@@ -70,7 +73,6 @@ RUN chmod 0664 /var/lib/graphite/storage/graphite.db
 
 # Add grafana config
 ADD ./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
-
 # Nginx
 EXPOSE :80
 # Carbon line receiver port
