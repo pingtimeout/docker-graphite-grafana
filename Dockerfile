@@ -24,7 +24,11 @@ RUN apt-get update && apt-get install -y \
     unzip \
     wget
 
-RUN pip install --upgrade pip==20.1
+# Pin pip version to 20.1.1 because we are still dependent on Python 2.7
+# Running with a more recent version like 20.2.4 results in these error messages:
+# /usr/local/lib/python2.7/dist-packages/pip/_internal/commands/install.py:235: UserWarning: Disabling all use of wheels due to the use of --build-option / --global-option / --install-option.
+# ERROR: Location-changing options found in --install-option: ['--prefix', '--install-lib'] from command line. This is unsupported, use pip-level options like --user, --prefix, --root, and --target instead.
+RUN pip install --upgrade pip==20.1.1
 RUN pip install \
     six \
     urllib3 \
@@ -43,9 +47,9 @@ RUN wget --no-check-certificate -O master.zip https://github.com/wolfcw/libfaket
     cd libfaketime-master && make install && cd ..
 
 # Grafana
-RUN wget https://dl.grafana.com/oss/release/grafana_6.4.3_amd64.deb ;\
-    dpkg -i grafana_6.4.3_amd64.deb ;\
-    rm grafana_6.4.3_amd64.deb
+RUN wget https://dl.grafana.com/oss/release/grafana_6.4.5_amd64.deb ;\
+    dpkg -i grafana_6.4.5_amd64.deb ;\
+    rm grafana_6.4.5_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
