@@ -1,11 +1,12 @@
 # DOCKER-VERSION 0.4.0
 
-FROM ubuntu:trusty
+FROM ubuntu:bionic
 
 # Install required packages
 RUN apt-get update && apt-get install -y \
     adduser \
     build-essential \
+    carbon-c-relay \
     gunicorn \
     libffi-dev \
     libfontconfig \
@@ -15,16 +16,19 @@ RUN apt-get update && apt-get install -y \
     python-ldap \
     python-memcache \
     python-pysqlite2 \
+    python-pip \
     python-simplejson \
-    python-support \
     python-twisted \
     sqlite3 \
     supervisor \
     unzip \
     wget
 
-RUN easy_install pip
-RUN pip install --upgrade pip
+# Pin pip version to 20.1.1 because we are still dependent on Python 2.7
+# Running with a more recent version like 20.2.4 results in these error messages:
+# /usr/local/lib/python2.7/dist-packages/pip/_internal/commands/install.py:235: UserWarning: Disabling all use of wheels due to the use of --build-option / --global-option / --install-option.
+# ERROR: Location-changing options found in --install-option: ['--prefix', '--install-lib'] from command line. This is unsupported, use pip-level options like --user, --prefix, --root, and --target instead.
+RUN pip install --upgrade pip==20.1.1
 RUN pip install \
     six \
     urllib3 \
@@ -43,9 +47,9 @@ RUN wget --no-check-certificate -O master.zip https://github.com/wolfcw/libfaket
     cd libfaketime-master && make install && cd ..
 
 # Grafana
-RUN wget https://dl.grafana.com/oss/release/grafana_6.1.6_amd64.deb ;\
-    dpkg -i grafana_6.1.6_amd64.deb ;\
-    rm grafana_6.1.6_amd64.deb
+RUN wget https://dl.grafana.com/oss/release/grafana_6.4.5_amd64.deb ;\
+    dpkg -i grafana_6.4.5_amd64.deb ;\
+    rm grafana_6.4.5_amd64.deb
 
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
@@ -56,6 +60,9 @@ RUN cd /var/lib/graphite/webapp && PYTHONPATH=/var/lib/graphite/webapp /var/lib/
 # Add system service config
 ADD ./nginx.conf /etc/nginx/nginx.conf
 ADD ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Add carbon-c-relay config
+ADD ./carbon-c-relay.conf /var/lib/graphite/conf/carbon-c-relay.conf
 
 # Add graphite carbon config
 ADD ./carbon.conf /var/lib/graphite/conf/carbon.conf
@@ -70,7 +77,6 @@ RUN chmod 0664 /var/lib/graphite/storage/graphite.db
 
 # Add grafana config
 ADD ./grafana-defaults.ini /usr/share/grafana/conf/defaults.ini
-
 # Nginx
 EXPOSE :80
 # Carbon line receiver port
