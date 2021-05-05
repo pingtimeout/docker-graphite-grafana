@@ -51,6 +51,8 @@ RUN wget https://dl.grafana.com/oss/release/grafana_6.4.5_amd64.deb ;\
     dpkg -i grafana_6.4.5_amd64.deb ;\
     rm grafana_6.4.5_amd64.deb
 
+RUN grafana-cli plugins install grafana-image-renderer
+
 # Add graphite webapp config
 ADD ./initial_data.json /var/lib/graphite/webapp/graphite/initial_data.json
 ADD ./local_settings.py /var/lib/graphite/webapp/graphite/local_settings.py
